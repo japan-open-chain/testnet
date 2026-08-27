@@ -1,0 +1,13 @@
+# JOC testnet / JOCT (chain id 10081, network id 361257328) execution-layer bootnodes
+# -----------------------------------------------------------------------------------
+# 1. Tag nodes with maintainer and region.
+# 2. Keep nodes updated.
+# 3. Review PRs: check for duplicates, reachability, and that the node is on
+#    genesis 0x0fb7b4779aae36dc557227283f182bc9a3b232c07fae4a2553734c5817df1d06.
+#
+# Pass to geth with:
+#   geth --bootnodes "$(yq -r '.[] | split(" ")[0]' enodes.yaml | paste -sd, -)"
+
+# Official JOC bootnodes (published on japanopenchain.org)
+- enode://c68340e7daac1eecc3cdfbfc7c68a80ebf91dbc7f63413dae39b75b2738e63965033cefe452f0b50d8f1d2c5df74eba9905e85c223dda9bc0040fb1c06f35dc5@13.158.174.185:30303  # aws-ap-northeast-1
+- enode://f964f94067a851758a3f308831602ca05a374a8a5dcba8ec5f78cde5d31dc809fc0115a84a785bbd1c8024a46d16eee732f4b681cc36cf323e8fab933f92849a@54.248.244.225:30303  # aws-ap-northeast-1
