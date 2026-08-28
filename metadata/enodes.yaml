@@ -6,7 +6,8 @@
 #    genesis 0x0fb7b4779aae36dc557227283f182bc9a3b232c07fae4a2553734c5817df1d06.
 #
 # Pass to geth with:
-#   geth --bootnodes "$(yq -r '.[] | split(" ")[0]' enodes.yaml | paste -sd, -)"
+#   geth --bootnodes "$(sed -n 's/^-[[:space:]]*\(enode:\/\/[^[:space:]#]*\).*$/\1/p' \
+#                       enodes.yaml | paste -sd, -)"
 
 # Added 2026-08-28, replacing the two published previously (13.158.174.185 and
 # 54.248.244.225). Consensus-layer counterpart: ./bootstrap_nodes.yaml

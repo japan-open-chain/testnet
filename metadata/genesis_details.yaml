@@ -1,6 +1,6 @@
 # JOC testnet (JOCT) — execution-layer genesis, as produced by ./genesis.json
 # Verified against https://rpc-3.testnet.japanopenchain.org (eth_getBlockByNumber 0x0)
-# on 2026-08-25. Reproduce with ../../scripts/verify_genesis.sh joct
+# on 2026-08-25. Reproduce with ../scripts/verify_genesis.sh
 
 chain_id: 10081
 network_id: 361257328  # NOTE: intentionally differs from chain_id; geth needs --networkid 361257328
