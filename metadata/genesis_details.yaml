@@ -1,6 +1,6 @@
 # JOC testnet (JOCT) — execution-layer genesis, as produced by ./genesis.json
 # Verified against https://rpc-3.testnet.japanopenchain.org (eth_getBlockByNumber 0x0)
-# on 2026-08-25. Reproduce with ../../scripts/verify_genesis.sh joct
+# on 2026-08-25. Reproduce with ../scripts/verify_genesis.sh
 
 chain_id: 10081
 network_id: 361257328  # NOTE: intentionally differs from chain_id; geth needs --networkid 361257328
@@ -38,13 +38,11 @@ forks:
   berlin: 1330295
   london: 1330295
   # Shanghai and later activate at the PoA -> PoS migration, which is not
-  # scheduled. See ./config.yaml and ../README.md#beacon-chain-status.
+  # scheduled. See ./config.yaml and ../README.md#beacon-chain.
 
-# Deposit contract — deployed, but no deposits yet
+# Deposit contract
 # ---------------------------------------------------------------
-# The contract is live and genuine: get_deposit_root() returns the canonical
-# empty-tree root, and get_deposit_count() is 0. The chain is still PoA; see
-# ./config.yaml and ../README.md#beacon-chain-status.
+# Deployed and awaiting deposits. See ./config.yaml.
 deposit_contract_address: 0x2d871682c97d93401F0348835af88A1D98ed6564
 deposit_contract_block: 19262622        # 2026-08-28T07:09:25Z, tx 0x25887f79…32e7;
                                         # internal CREATE from factory

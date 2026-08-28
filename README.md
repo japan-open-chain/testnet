@@ -4,10 +4,9 @@ Japan Open Chain testnet — chain ID `10081`, Clique proof-of-authority,
 5-second blocks.
 
 This directory contains the chain metadata, configuration parameters and
-genesis information for JOCT. The execution-layer files in
-[`metadata/`](metadata/) are verified against the live network by CI. The
-consensus-layer files describe a beacon chain that has not started yet, so
-they are not — the [Files](#files) table says which is which.
+genesis information for JOCT, execution and consensus layer both. The
+execution-layer files are verified against the live network by CI; the
+consensus-layer files are the real JOCT beacon config, awaiting genesis.
 
 > **The p2p network id is `361257328`, not the chain id `10081`.** Geth
 > defaults `--networkid` to the genesis `chainId`, so it must be passed
@@ -141,27 +140,21 @@ cast compute-address --nonce 3 0x4c8cbfaca8675deb6457a022cc7b3f4f2b41b61d
 The layout follows [eth-clients](https://github.com/eth-clients/mainnet), the
 same one [`gu-corp/sandbox1`](https://github.com/gu-corp/sandbox1) uses.
 
-Everything the live PoA chain runs on is filled in and checked by CI:
-
 | File | Contents |
 |---|---|
 | [`metadata/genesis.json`](metadata/genesis.json) | Execution-layer genesis. Feed to `geth init`. |
 | [`metadata/genesis_details.yaml`](metadata/genesis_details.yaml) | Genesis hash, state root, clique params, fork blocks, allocation summary |
-| [`metadata/enodes.yaml`](metadata/enodes.yaml) | Execution-layer bootnode enode URLs |
+| [`metadata/config.yaml`](metadata/config.yaml) | Beacon chain config. Feed to a consensus client. |
 | [`metadata/chain.json`](metadata/chain.json) | EIP-155 chain metadata — id, RPC endpoints, native currency, explorer |
+| [`metadata/enodes.yaml`](metadata/enodes.yaml) | Execution-layer bootnode enode URLs |
+| [`metadata/bootstrap_nodes.yaml`](metadata/bootstrap_nodes.yaml) | Consensus-layer bootnode ENRs |
 | [`metadata/deposit_contract.txt`](metadata/deposit_contract.txt) | Deposit contract address |
 | [`metadata/deposit_contract_block.txt`](metadata/deposit_contract_block.txt) | Eth1 block it was deployed in |
 | [`metadata/deposit_contract_block_hash.txt`](metadata/deposit_contract_block_hash.txt) | Hash of that block |
-| [`metadata/bootstrap_nodes.yaml`](metadata/bootstrap_nodes.yaml) | Consensus-layer bootnode ENRs |
 | [`scripts/discv5_probe.py`](scripts/discv5_probe.py) | Proves a discv5 node is alive by making it answer `WHOAREYOU` |
 
-The remaining consensus-layer files describe a beacon chain that **has not
-started**:
-
-| File | State |
-|---|---|
-| [`metadata/config.yaml`](metadata/config.yaml) | Beacon chain config. Fully populated, no `TBD` left, but carries a `DRAFT — NOT ACTIVE` banner: nothing in it has been checked against a running chain. |
-| `metadata/genesis.ssz` | Beacon genesis state — **absent**, and deliberately not stubbed |
+`metadata/genesis.ssz` — the beacon genesis state — is the one file not here
+yet. It cannot exist until there are deposits to derive it from.
 
 ### How the bootnodes are checked
 
@@ -188,59 +181,48 @@ port that accepts TCP — enough to catch rot, not enough to prove identity.
 `scripts/check_bootnodes.sh` runs both, and CI runs it weekly, so a bootnode
 going away surfaces on its own.
 
-## Beacon chain status
+## Beacon chain
 
-The parameters are decided and the bootnodes are up, but nothing has launched.
-As of 2026-08-28:
+The config is final and the bootnodes are up. Genesis has not fired yet.
 
 | | |
 |---|---|
-| Deposits in the contract | **0** — beacon genesis cannot trigger |
+| Deposits in the contract | `0` — genesis triggers on the 2nd |
 | `MIN_GENESIS_ACTIVE_VALIDATOR_COUNT` | `2` |
 | `MIN_GENESIS_TIME` | `1787905920` — 2026-08-28T08:32:00Z, already elapsed |
-| `TERMINAL_TOTAL_DIFFICULTY` | `2**64-1` — the merge is **not** scheduled |
+| `GENESIS_FORK_VERSION` | `0x00002761` — low bytes are chain id `10081` |
 | Forks scheduled | Altair epoch 5, Bellatrix epoch 10 |
-| Forks disabled | Capella and everything after, at `2**64-1` |
-| Beacon API | nothing answers |
+| Forks disabled | Capella onwards, at `2**64-1` |
+| `TERMINAL_TOTAL_DIFFICULTY` | `2**64-1` — merge not scheduled |
 
-Because `MIN_GENESIS_TIME` has already passed with no deposits recorded, beacon
-genesis is now gated entirely on the second deposit: it will be that eth1
-block's timestamp plus `GENESIS_DELAY`, not `MIN_GENESIS_TIME`.
+Since `MIN_GENESIS_TIME` has elapsed, genesis time will be the timestamp of the
+eth1 block carrying the second deposit, plus `GENESIS_DELAY`.
 
-Bellatrix activating at epoch 10 does not merge the chain. The merge needs
-`TERMINAL_TOTAL_DIFFICULTY`, and at Clique's 1 difficulty per 5-second block the
-max-uint64 stub is roughly 2.9 trillion years away — unreachable by design. The
-execution layer stays PoA until a real value is chosen.
+Bellatrix at epoch 10 does not merge the chain — that needs
+`TERMINAL_TOTAL_DIFFICULTY`, which is parked at the max-uint64 stub. The
+execution layer stays Clique PoA until a real value is set.
 
-### Why `PRESET_BASE` is `gnosis`
+### `PRESET_BASE` is `gnosis`
 
-Lighthouse — and most consensus clients — do not allow overriding preset values
-from a config file; the preset is compiled in. JOC produces a block every 5
-seconds on the execution layer, matching Gnosis Chain rather than Ethereum
-mainnet's 12s, so the Gnosis preset is the right base. It sets `SLOTS_PER_EPOCH`
-to 16, which makes an epoch `16 * 5 = 80` seconds, not the 384s of the mainnet
-preset — worth remembering when reading the fork epochs above.
+Consensus clients compile the preset in; it cannot be overridden from a config
+file. JOC produces a block every 5 seconds, matching Gnosis Chain rather than
+mainnet's 12s. The preset sets `SLOTS_PER_EPOCH` to 16, so an epoch is 80
+seconds, not 384 — worth remembering when reading the fork epochs above.
 
 - https://github.com/gnosischain/specs/tree/master/consensus/preset/gnosis
 - https://github.com/sigp/lighthouse/tree/stable/consensus/types/presets/gnosis
 
-### Why there is no `genesis.ssz`
+### `genesis.ssz` comes from the node, not from a script
 
-`genesis.ssz` is the beacon chain genesis state, derived from the deposit
-contract's contents at a chosen block. The contract exists but is empty, so
-there is nothing to derive a state from.
+It is the beacon genesis state, derived from the deposit contract's contents.
+No deposits, no state — so the file is absent rather than stubbed. A generated
+stand-in would carry a fictional `genesis_validators_root`, and that value
+domain-separates every signature on the network: clients would compute fork
+digests matching no peer.
 
-It is the one missing piece that gets no placeholder, because there is no such
-thing as a placeholder for it. A generated stand-in would carry a
-`genesis_validators_root` that is pure fiction — and that value is what every
-signature on the network is domain-separated by. Shipping one publicly is worse
-than shipping nothing: clients would compute fork digests that match no peer,
-and anything signed against it would be signed under the wrong domain. It gets
-committed when the beacon chain is real, not before.
-
-Take it from the beacon node's own `/eth/v2/debug/beacon/states/genesis` when
-there is one, rather than rebuilding it from the eth1 deposits — that is the
-kind of reconstruction the `berlinBlock` lesson on sandbox1 warns against.
+Once a beacon node is running, take it from
+`/eth/v2/debug/beacon/states/genesis` rather than rebuilding it from the eth1
+deposits.
 
 ## Endpoints
 
@@ -251,11 +233,43 @@ kind of reconstruction the `berlinBlock` lesson on sandbox1 warns against.
 
 ## Run a node
 
+The chain is Clique PoA, so an execution client on its own follows the head
+today. A consensus client is only needed once the beacon chain has genesis.
+
+### Execution layer
+
 ```bash
 geth init --datadir ~/.joct metadata/genesis.json
 geth --datadir ~/.joct --networkid 361257328 --syncmode full \
      --bootnodes "$(sed -n 's/^-[[:space:]]*\(enode:\/\/[^[:space:]#]*\).*$/\1/p' \
                     metadata/enodes.yaml | paste -sd, -)"
+```
+
+`--networkid` must be passed explicitly: geth would otherwise default it to the
+genesis `chainId`, `10081`, not the `361257328` this network uses.
+
+### Consensus layer
+
+Waits on `metadata/genesis.ssz`, which is not published yet — a client cannot
+join without it, since `genesis_validators_root` names every gossip topic.
+
+```bash
+lighthouse beacon_node \
+  --testnet-dir metadata \
+  --boot-nodes "$(sed -n 's/^-[[:space:]]*\(enr:[^[:space:]#]*\).*$/\1/p' \
+                  metadata/bootstrap_nodes.yaml | paste -sd, -)" \
+  --execution-endpoint http://localhost:8551 \
+  --execution-jwt ~/.joct/jwt.hex
+```
+
+`--testnet-dir metadata` picks up `config.yaml` and `genesis.ssz` from this
+repo. Other clients want the same two files under different flag names.
+
+### Verify
+
+```bash
+scripts/verify_genesis.sh    # geth init reproduces the genesis hash
+scripts/check_bootnodes.sh   # published bootnodes are well-formed and answer
 ```
 
 ## License
