@@ -152,17 +152,43 @@ Everything the live PoA chain runs on is filled in and checked by CI:
 | [`metadata/deposit_contract.txt`](metadata/deposit_contract.txt) | Deposit contract address |
 | [`metadata/deposit_contract_block.txt`](metadata/deposit_contract_block.txt) | Eth1 block it was deployed in |
 | [`metadata/deposit_contract_block_hash.txt`](metadata/deposit_contract_block_hash.txt) | Hash of that block |
+| [`metadata/bootstrap_nodes.yaml`](metadata/bootstrap_nodes.yaml) | Consensus-layer bootnode ENRs |
+| [`scripts/discv5_probe.py`](scripts/discv5_probe.py) | Proves a discv5 node is alive by making it answer `WHOAREYOU` |
 
 The remaining consensus-layer files describe a beacon chain that **has not
-started**. The parameters are decided, but no validator has deposited, no
-beacon node answers, and the merge is not scheduled — see
-[`pos-migration/`](pos-migration/):
+started**. The parameters are decided and the bootnodes are up, but no
+validator has deposited, no beacon node answers, and the merge is not
+scheduled — see [`pos-migration/`](pos-migration/):
 
 | File | State |
 |---|---|
 | [`metadata/config.yaml`](metadata/config.yaml) | Beacon chain config. Fully populated, no `TBD` left, but carries a `DRAFT — NOT ACTIVE` banner: nothing in it has been checked against a running chain. |
-| [`metadata/bootstrap_nodes.yaml`](metadata/bootstrap_nodes.yaml) | Consensus-layer bootnode ENRs — empty, none published |
 | `metadata/genesis.ssz` | Beacon genesis state — **absent**, and deliberately not stubbed |
+
+### How the bootnodes are checked
+
+The two layers are held to **different** standards, and it is worth knowing
+which is which.
+
+The consensus bootnodes in
+[`metadata/bootstrap_nodes.yaml`](metadata/bootstrap_nodes.yaml) are **proven**
+alive. A TCP connect only shows a port is open, and discovery runs over UDP
+where a connect shows nothing at all — there is no handshake, so `nc -zu`
+reports success against a black hole. Instead
+[`scripts/discv5_probe.py`](scripts/discv5_probe.py) sends a real discv5
+packet. Its masking key is the *recipient's* node id, keccak256 of the public
+key in the ENR, so only a node that agrees its id is that can unmask it — and
+it must answer `WHOAREYOU`. Getting that reply binds the key in the record to
+whatever is actually listening.
+
+The execution bootnodes in [`metadata/enodes.yaml`](metadata/enodes.yaml) get a
+**weaker** check. There is no cheap equivalent of the `WHOAREYOU` trick for
+devp2p: proving a node id belongs to an address needs a full RLPx handshake,
+ECIES over secp256k1 ECDH. So they are only checked for a well-formed URL and a
+port that accepts TCP — enough to catch rot, not enough to prove identity.
+
+`scripts/check_bootnodes.sh` runs both, and CI runs it weekly, so a bootnode
+going away surfaces on its own.
 
 `genesis.ssz` is the one gap with no placeholder: its `genesis_validators_root`
 domain-separates every signature on the network, so a fabricated one would make

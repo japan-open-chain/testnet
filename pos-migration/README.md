@@ -75,15 +75,24 @@ Bellatrix activating at epoch 10 does not merge the chain. The merge needs
 the max-uint64 stub is roughly 2.9 trillion years away — unreachable by design.
 The execution layer stays PoA until a real value is chosen.
 
-Still to produce, in `../metadata/`:
+Two consensus-layer bootnodes are published and proven alive — see
+[`../metadata/bootstrap_nodes.yaml`](../metadata/bootstrap_nodes.yaml). They
+run discovery for a beacon chain that does not exist yet, which is the normal
+order: the bootnodes come up first.
+
+Still to produce:
 
 | File | State |
 |---|---|
-| [`../metadata/bootstrap_nodes.yaml`](../metadata/bootstrap_nodes.yaml) | empty list — no consensus-layer bootnodes exist yet |
 | `../metadata/genesis.ssz` | absent — see below |
 
 Also still to be produced: the beacon genesis details — fork digest, validators
 root, genesis time. None of them exist until genesis triggers.
+
+Two further execution-layer bootnodes were supplied on 2026-08-28 but are
+**held back** at the bottom of [`../metadata/enodes.yaml`](../metadata/enodes.yaml):
+neither host accepts inbound connections from the public internet yet. They are
+one uncomment away once that changes.
 
 ### The two layers do not yet agree on the merge
 

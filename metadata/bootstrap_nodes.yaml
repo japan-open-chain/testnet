@@ -1,15 +1,19 @@
-# Consensus-layer bootstrap nodes (ENRs) for JOC testnet (JOCT).
+# Consensus-layer bootstrap nodes (ENRs) for JOC testnet (JOCT). Supplied by
+# the operators on 2026-08-28. Both are dedicated discv5 bootnodes: udp 9000
+# only, no tcp, and no eth2 entry.
 #
-# TBD — JOCT has no beacon chain yet, so there are no consensus-layer bootnodes
-# to publish. The list stays empty rather than carrying a placeholder string: a
-# client fed a malformed ENR fails at startup, an empty list just means "no
-# bootnodes configured".
+# Liveness is proven, not dialled: ../scripts/discv5_probe.py makes each node
+# answer WHOAREYOU, which only a node whose id is keccak256 of the key in its
+# own record can do. Both answered, and the id matched, when they were added.
 #
 # Execution-layer counterpart: ./enodes.yaml
+#
+# Note that the beacon chain these point at has not started — see ./config.yaml.
 #
 # Pass to a consensus client with:
 #   lighthouse beacon_node --testnet-dir metadata \
 #     --boot-nodes "$(sed -n 's/^-[[:space:]]*\(enr:[^[:space:]#]*\).*$/\1/p' \
 #                     metadata/bootstrap_nodes.yaml | paste -sd, -)"
 
-[]
+- enr:-IS4QG-lVIOC_Yun6wk_54ZOrps5tZmoZMFXLFc7wfB76COpDqfbTaODeXBYdXOpItPZt0W4a6Xo5_ugK9gsBV0FVIUBgmlkgnY0gmlwhBKx9kiJc2VjcDI1NmsxoQM5rT8o1LnjEKbXrhN9rznOJqkv2i0meNKMXDwODAKqtoN1ZHCCIyg  # 18.177.246.72:9000 udp, aws-ap-northeast-1
+- enr:-IS4QHDlPMfsFccuuDJkMSZVbj_QUlcl9bM7KMtEA3RQcNGadtJRfiyQeZERXjmLm17iztATiLd-Vbs8b-4fJHYmJhkBgmlkgnY0gmlwhDRFkJmJc2VjcDI1NmsxoQOxqYMNUWe2dvOG9yIuB0yMZQeRrFXsT_bAKU8OJFREq4N1ZHCCIyg  # 52.69.144.153:9000 udp, aws-ap-northeast-1
