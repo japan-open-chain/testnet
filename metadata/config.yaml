@@ -3,11 +3,14 @@
 # ---------------------------------------------------------------------
 # JOC testnet (JOCT) consensus-layer (beacon chain) configuration.
 #
-# JOC testnet runs Clique PoA today. This file is the working draft for the
-# planned PoA -> PoS migration and every value marked TBD is still open.
-# Do NOT point a production beacon node at this file.
+# JOC testnet runs Clique PoA today. There is no beacon chain, so nothing
+# here has been verified against a live network. Every value marked TBD is
+# still open. Do NOT point a production beacon node at this file — with the
+# fork versions unset a client cannot compute a fork digest, and with
+# TERMINAL_TOTAL_DIFFICULTY unset it has no merge point.
 #
-# The execution-layer counterpart lives in ../../joct/metadata/.
+# The execution-layer counterpart lives in ./genesis.json, and the merge
+# fields that will be added to it are drafted in ../pos-migration/.
 # =====================================================================
 
 PRESET_BASE: 'gnosis'
@@ -154,10 +157,12 @@ REORG_MAX_EPOCHS_SINCE_FINALIZATION: 2
 # Deposit contract
 # ---------------------------------------------------------------
 # JOC Testnet (JOCT). Note: the execution-layer p2p network id is 361257328,
-# which differs from the chain id — see ../../joct/metadata/genesis_details.yaml.
+# which differs from the chain id — see ./genesis_details.yaml. DEPOSIT_NETWORK_ID
+# is the eth1 p2p network id, i.e. the value geth takes as --networkid, so it is
+# 361257328 and not the chain id. sandbox1 sets it the same way.
 DEPOSIT_CHAIN_ID: 10081
-DEPOSIT_NETWORK_ID: 10081
-DEPOSIT_CONTRACT_ADDRESS: TBD
+DEPOSIT_NETWORK_ID: 361257328
+DEPOSIT_CONTRACT_ADDRESS: TBD  # see ./deposit_contract.txt
 
 # Networking
 # ---------------------------------------------------------------

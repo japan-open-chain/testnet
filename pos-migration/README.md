@@ -1,24 +1,23 @@
 # PoA → PoS migration (draft)
 
-**Nothing in this directory is active.** JOC testnet (JOCT) runs Clique proof-of-authority
-today. The configuration that actually drives the live network is in
-[`../metadata/`](../metadata/).
+**JOC testnet (JOCT) runs Clique proof-of-authority today.** The execution-layer
+configuration that actually drives the live network is in
+[`../metadata/`](../metadata/) and is verified against the chain by CI. Nothing
+about the merge is active.
 
-This directory holds the working draft of the consensus-layer (beacon chain)
-configuration for the planned migration to proof of stake. It is kept out of
-`metadata/` on purpose: in the
-[eth-clients](https://github.com/eth-clients/mainnet) layout this repo follows,
-`metadata/config.yaml` is the *live* beacon config, and a draft in that slot
-would be read as authoritative by tooling. When the migration parameters are
-final, these files move into `../metadata/`.
+This directory holds the execution-side draft of the migration: the genesis file
+with the merge fields added. The consensus-layer (beacon chain) files live in
+[`../metadata/`](../metadata/) alongside the execution genesis, following the
+[eth-clients](https://github.com/eth-clients/mainnet) layout that
+[`gu-corp/sandbox1`](https://github.com/gu-corp/sandbox1) uses — but every value
+in them that defines the chain is still `TBD`, and they carry a
+`DRAFT — NOT ACTIVE` banner saying so.
 
 ## Contents
 
 | File | Contents |
 |---|---|
-| [`config.yaml`](config.yaml) | Beacon chain config |
 | [`genesis.json`](genesis.json) | Execution genesis with the merge fields added |
-| [`deposit_contract_block.txt`](deposit_contract_block.txt) | Block the deposit contract is deployed at |
 | [`presets.md`](presets.md) | Which spec preset the config is based on, and why |
 
 ## `genesis.json`
@@ -43,8 +42,8 @@ which would mean *merge immediately*.
 
 ## What is still open
 
-Every value marked `TBD` in `config.yaml` is undecided — 15 of them, alongside
-4 forks parked at the max-uint64 stub.
+Every value marked `TBD` in [`../metadata/config.yaml`](../metadata/config.yaml)
+is undecided — 15 of them, alongside 4 forks parked at the max-uint64 stub.
 
 The undecided values include everything that defines the chain's identity —
 `TERMINAL_TOTAL_DIFFICULTY`, `MIN_GENESIS_TIME`,
@@ -54,12 +53,18 @@ chain id in the low bytes: mainnet uses `0x0X000051` (`81 = 0x51`) and sandbox1
 uses `0x0X000539` (`1337 = 0x539`). The testnet equivalent would be
 `0x0X002761` (`10081 = 0x2761`), but that has not been decided.
 
-Also still to be produced:
+Alongside those, in `../metadata/`:
 
-- `bootstrap_nodes.yaml` — consensus-layer bootnodes (ENRs)
-- `deposit_contract.txt` — deposit contract address (also `DEPOSIT_CONTRACT_ADDRESS` in `config.yaml`)
-- `genesis.ssz` — beacon chain genesis state
-- Genesis details: fork digest, validators root, genesis time
+| File | State |
+|---|---|
+| [`../metadata/bootstrap_nodes.yaml`](../metadata/bootstrap_nodes.yaml) | empty list — no consensus-layer bootnodes exist yet |
+| [`../metadata/deposit_contract.txt`](../metadata/deposit_contract.txt) | `TBD` — contract not deployed |
+| [`../metadata/deposit_contract_block.txt`](../metadata/deposit_contract_block.txt) | `TBD` |
+| [`../metadata/deposit_contract_block_hash.txt`](../metadata/deposit_contract_block_hash.txt) | `TBD` |
+| `../metadata/genesis.ssz` | absent — see below |
+
+Also still to be produced: the beacon genesis details — fork digest, validators
+root, genesis time.
 
 ### Why there is no `genesis.ssz`
 
@@ -68,15 +73,17 @@ contract's contents at a chosen block. None of its inputs exist yet:
 `MIN_GENESIS_TIME`, `MIN_GENESIS_ACTIVE_VALIDATOR_COUNT`, `GENESIS_FORK_VERSION`
 and `DEPOSIT_CONTRACT_ADDRESS` are all `TBD`, and no validator has deposited.
 
-A generated stand-in would carry a `genesis_validators_root` that is pure
-fiction — and that value is what every signature on the network is
-domain-separated by. Shipping one publicly is worse than shipping nothing:
-clients would compute fork digests that match no peer, and anything signed
-against it would be signed under the wrong domain. It gets committed when the
-migration parameters are real, not before.
+It is the one missing file that gets no `TBD` placeholder, because there is no
+such thing as a placeholder for it. A generated stand-in would carry a
+`genesis_validators_root` that is pure fiction — and that value is what every
+signature on the network is domain-separated by. Shipping one publicly is worse
+than shipping nothing: clients would compute fork digests that match no peer,
+and anything signed against it would be signed under the wrong domain. It gets
+committed when the migration parameters are real, not before.
 
 ## Do not use
 
-These files cannot be verified — there is no beacon chain to check them
-against, which is why they sit outside the CI-verified `metadata/` directory.
-Do not point a production beacon node at them.
+None of this can be verified — there is no beacon chain to check it against.
+Do not point a production beacon node at
+[`../metadata/config.yaml`](../metadata/config.yaml), and do not `geth init` a
+production node with the `genesis.json` in this directory.

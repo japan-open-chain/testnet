@@ -1,0 +1,15 @@
+# Consensus-layer bootstrap nodes (ENRs) for JOC testnet (JOCT).
+#
+# TBD — JOCT has no beacon chain yet, so there are no consensus-layer bootnodes
+# to publish. The list stays empty rather than carrying a placeholder string: a
+# client fed a malformed ENR fails at startup, an empty list just means "no
+# bootnodes configured".
+#
+# Execution-layer counterpart: ./enodes.yaml
+#
+# Pass to a consensus client with:
+#   lighthouse beacon_node --testnet-dir metadata \
+#     --boot-nodes "$(sed -n 's/^-[[:space:]]*\(enr:[^[:space:]#]*\).*$/\1/p' \
+#                     metadata/bootstrap_nodes.yaml | paste -sd, -)"
+
+[]

@@ -47,16 +47,39 @@ single funded account:
 
 ## Files
 
+The layout follows [eth-clients](https://github.com/eth-clients/mainnet), the
+same one [`gu-corp/sandbox1`](https://github.com/gu-corp/sandbox1) uses.
+
+Everything the live PoA chain runs on is filled in and checked by CI:
+
 | File | Contents |
 |---|---|
 | [`metadata/genesis.json`](metadata/genesis.json) | Execution-layer genesis. Feed to `geth init`. |
 | [`metadata/genesis_details.yaml`](metadata/genesis_details.yaml) | Genesis hash, state root, clique params, fork blocks, allocation summary |
-| [`metadata/enodes.yaml`](metadata/enodes.yaml) | Execution-layer bootnodes |
+| [`metadata/enodes.yaml`](metadata/enodes.yaml) | Execution-layer bootnode enode URLs |
 | [`metadata/chain.json`](metadata/chain.json) | EIP-155 chain metadata — id, RPC endpoints, native currency, explorer |
 
-Proof-of-stake configuration for the planned PoA → PoS migration is a draft and
-lives in [`pos-migration/`](pos-migration/), outside the CI-verified `metadata/`
-directory.
+The consensus-layer files exist so the layout is complete, but JOCT has no
+beacon chain yet, so their contents are placeholders. **Nothing below is
+usable** — see [`pos-migration/`](pos-migration/) for what is still open:
+
+| File | State |
+|---|---|
+| [`metadata/config.yaml`](metadata/config.yaml) | Beacon chain config. Carries a `DRAFT — NOT ACTIVE` banner; 15 values are `TBD`. |
+| [`metadata/bootstrap_nodes.yaml`](metadata/bootstrap_nodes.yaml) | Consensus-layer bootnode ENRs — empty, none published |
+| [`metadata/deposit_contract.txt`](metadata/deposit_contract.txt) | Deposit contract address — `TBD`, not deployed |
+| [`metadata/deposit_contract_block.txt`](metadata/deposit_contract_block.txt) | Eth1 block it was deployed in — `TBD` |
+| [`metadata/deposit_contract_block_hash.txt`](metadata/deposit_contract_block_hash.txt) | Hash of that block — `TBD` |
+| `metadata/genesis.ssz` | Beacon genesis state — **absent**, and deliberately not stubbed |
+
+`genesis.ssz` is the one gap with no placeholder: its `genesis_validators_root`
+domain-separates every signature on the network, so a fabricated one would make
+clients compute fork digests that match no peer. See
+[`pos-migration/README.md`](pos-migration/README.md#why-there-is-no-genesisssz).
+
+The execution-side draft of the merge — `genesis.json` with the fork-activation
+fields added — stays in [`pos-migration/`](pos-migration/), where
+`scripts/check_pos_migration.sh` holds it to the live genesis.
 
 ## Endpoints
 
