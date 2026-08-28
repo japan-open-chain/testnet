@@ -9,10 +9,34 @@ verified against the live network by CI.
 
 > **The p2p network id is `361257328`, not the chain id `10081`.** Geth
 > defaults `--networkid` to the genesis `chainId`, so it must be passed
-> explicitly or the node will never handshake with a testnet peer.
-> `chain.json` carries `networkId: 10081` because that field follows the
-> EIP-155 chain-list convention; the value geth needs is below and in
-> [`metadata/genesis_details.yaml`](metadata/genesis_details.yaml).
+> explicitly or the node will never handshake with a testnet peer. Every file
+> here carries `361257328` — [`chain.json`](metadata/chain.json),
+> [`genesis_details.yaml`](metadata/genesis_details.yaml) and
+> `DEPOSIT_NETWORK_ID` in [`config.yaml`](metadata/config.yaml).
+
+### A note on `chain.json`'s `networkId`
+
+The upstream [ethereum-lists/chains](https://github.com/ethereum-lists/chains)
+entry for JOCT (`eip155-10081.json`) publishes `networkId: 10081`. **That is
+wrong**, and this repo deliberately disagrees with it: the field is the p2p
+network id, and the network answers `net_version` with `361257328`.
+
+```bash
+curl -sS -X POST -H 'Content-Type: application/json' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"net_version","params":[]}' \
+  https://rpc-3.testnet.japanopenchain.org | jq -r .result
+# 361257328
+```
+
+Mirroring `chainId` into `networkId` is not a chain-list convention — it is
+just what most entries look like, because for most chains the two values are
+equal. Of the 2726 entries in the registry, **48 record a `networkId` that
+differs from their `chainId`**: Ethereum Classic is `chainId 61 / networkId 1`,
+Camino C-Chain is `500 / 1000`, Mordor is `63 / 7`. The schema expects the real
+value. `gu-corp/sandbox1` sets it the same way, `networkId: 1456260212` against
+chain ID `1337`.
+
+The upstream entry still needs a PR to match.
 
 ## Genesis information
 
