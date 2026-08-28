@@ -50,18 +50,32 @@ deposited, and every parameter that depends on the deposits is still open. See
 [`../README.md#deposit-contract`](../README.md#deposit-contract) for how the
 address and block were verified.
 
-Every value marked `TBD` in [`../metadata/config.yaml`](../metadata/config.yaml)
-is undecided — 14 of them, alongside 4 forks parked at the max-uint64 stub.
+[`../metadata/config.yaml`](../metadata/config.yaml) no longer carries any
+`TBD`. The fork versions are set — `0x0X002761`, encoding chain id
+`10081 = 0x2761`, distinct from joc mainnet's `0x0X000051` and sandbox1's
+`0x0X000539`, so the three networks cannot collide on a fork digest.
 
-The undecided values include everything that defines the chain's identity —
-`TERMINAL_TOTAL_DIFFICULTY`, `MIN_GENESIS_TIME`,
-`MIN_GENESIS_ACTIVE_VALIDATOR_COUNT`, the fork epochs — plus the whole set of
-fork versions. Both other networks encode their chain id in the low bytes:
-mainnet uses `0x0X000051` (`81 = 0x51`) and sandbox1 uses `0x0X000539`
-(`1337 = 0x539`). The testnet equivalent would be `0x0X002761`
-(`10081 = 0x2761`), but that has not been decided.
+That is not the same as the chain being ready. What the values actually say:
 
-Alongside those, in `../metadata/`:
+| | |
+|---|---|
+| `MIN_GENESIS_ACTIVE_VALIDATOR_COUNT` | `2` |
+| Deposits in the contract | **0** — genesis cannot trigger |
+| `MIN_GENESIS_TIME` | `1787905920` — 2026-08-28T08:32:00Z, already elapsed |
+| `TERMINAL_TOTAL_DIFFICULTY` | `2**64-1` — the merge is **not** scheduled |
+| Forks scheduled | Altair epoch 5, Bellatrix epoch 10 |
+| Forks disabled | Capella and everything after, at `2**64-1` |
+
+Because `MIN_GENESIS_TIME` has already passed with no deposits recorded, beacon
+genesis is now gated entirely on the second deposit: it will be that eth1
+block's timestamp plus `GENESIS_DELAY`, not `MIN_GENESIS_TIME`.
+
+Bellatrix activating at epoch 10 does not merge the chain. The merge needs
+`TERMINAL_TOTAL_DIFFICULTY`, and at Clique's 1 difficulty per 5-second block
+the max-uint64 stub is roughly 2.9 trillion years away — unreachable by design.
+The execution layer stays PoA until a real value is chosen.
+
+Still to produce, in `../metadata/`:
 
 | File | State |
 |---|---|
@@ -69,7 +83,21 @@ Alongside those, in `../metadata/`:
 | `../metadata/genesis.ssz` | absent — see below |
 
 Also still to be produced: the beacon genesis details — fork digest, validators
-root, genesis time.
+root, genesis time. None of them exist until genesis triggers.
+
+### The two layers do not yet agree on the merge
+
+`config.yaml` says `TERMINAL_TOTAL_DIFFICULTY: 18446744073709551615`.
+[`genesis.json`](genesis.json) in this directory still says
+`"terminalTotalDifficulty": "TBD"`, and its `shanghaiTime`, `cancunTime` and
+`pragueTime` are `"TBD"` too, matching Capella/Deneb/Electra being disabled on
+the consensus side.
+
+Both mean "no merge scheduled", so nothing is broken — but they say it
+differently, and that is worth resolving before either file is used in anger.
+Setting the execution side to the same max-uint64 stub would make the two
+literally agree; it is left as `TBD` for now because the three timestamp forks
+genuinely are undecided, and a half-filled file invites being trusted.
 
 ### Why there is no `genesis.ssz`
 

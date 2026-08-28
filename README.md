@@ -4,8 +4,10 @@ Japan Open Chain testnet — chain ID `10081`, Clique proof-of-authority,
 5-second blocks.
 
 This directory contains the chain metadata, configuration parameters and
-genesis information for JOCT. Everything in [`metadata/`](metadata/) is
-verified against the live network by CI.
+genesis information for JOCT. The execution-layer files in
+[`metadata/`](metadata/) are verified against the live network by CI. The
+consensus-layer files describe a beacon chain that has not started yet, so
+they are not — the [Files](#files) table says which is which.
 
 > **The p2p network id is `361257328`, not the chain id `10081`.** Geth
 > defaults `--networkid` to the genesis `chainId`, so it must be passed
@@ -151,13 +153,14 @@ Everything the live PoA chain runs on is filled in and checked by CI:
 | [`metadata/deposit_contract_block.txt`](metadata/deposit_contract_block.txt) | Eth1 block it was deployed in |
 | [`metadata/deposit_contract_block_hash.txt`](metadata/deposit_contract_block_hash.txt) | Hash of that block |
 
-The remaining consensus-layer files exist so the layout is complete, but JOCT
-has no beacon chain yet. **Nothing below is usable** — see
-[`pos-migration/`](pos-migration/) for what is still open:
+The remaining consensus-layer files describe a beacon chain that **has not
+started**. The parameters are decided, but no validator has deposited, no
+beacon node answers, and the merge is not scheduled — see
+[`pos-migration/`](pos-migration/):
 
 | File | State |
 |---|---|
-| [`metadata/config.yaml`](metadata/config.yaml) | Beacon chain config. Carries a `DRAFT — NOT ACTIVE` banner; 14 values are `TBD`. |
+| [`metadata/config.yaml`](metadata/config.yaml) | Beacon chain config. Fully populated, no `TBD` left, but carries a `DRAFT — NOT ACTIVE` banner: nothing in it has been checked against a running chain. |
 | [`metadata/bootstrap_nodes.yaml`](metadata/bootstrap_nodes.yaml) | Consensus-layer bootnode ENRs — empty, none published |
 | `metadata/genesis.ssz` | Beacon genesis state — **absent**, and deliberately not stubbed |
 
