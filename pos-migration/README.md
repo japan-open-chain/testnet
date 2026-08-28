@@ -1,24 +1,23 @@
 # PoA → PoS migration (draft)
 
-**Nothing in this directory is active.** JOC testnet (JOCT) runs Clique proof-of-authority
-today. The configuration that actually drives the live network is in
-[`../metadata/`](../metadata/).
+**JOC testnet (JOCT) runs Clique proof-of-authority today.** The execution-layer
+configuration that actually drives the live network is in
+[`../metadata/`](../metadata/) and is verified against the chain by CI. Nothing
+about the merge is active.
 
-This directory holds the working draft of the consensus-layer (beacon chain)
-configuration for the planned migration to proof of stake. It is kept out of
-`metadata/` on purpose: in the
-[eth-clients](https://github.com/eth-clients/mainnet) layout this repo follows,
-`metadata/config.yaml` is the *live* beacon config, and a draft in that slot
-would be read as authoritative by tooling. When the migration parameters are
-final, these files move into `../metadata/`.
+This directory holds the execution-side draft of the migration: the genesis file
+with the merge fields added. The consensus-layer (beacon chain) files live in
+[`../metadata/`](../metadata/) alongside the execution genesis, following the
+[eth-clients](https://github.com/eth-clients/mainnet) layout that
+[`gu-corp/sandbox1`](https://github.com/gu-corp/sandbox1) uses — but every value
+in them that defines the chain is still `TBD`, and they carry a
+`DRAFT — NOT ACTIVE` banner saying so.
 
 ## Contents
 
 | File | Contents |
 |---|---|
-| [`config.yaml`](config.yaml) | Beacon chain config |
 | [`genesis.json`](genesis.json) | Execution genesis with the merge fields added |
-| [`deposit_contract_block.txt`](deposit_contract_block.txt) | Block the deposit contract is deployed at |
 | [`presets.md`](presets.md) | Which spec preset the config is based on, and why |
 
 ## `genesis.json`
@@ -36,47 +35,97 @@ enforces that invariant in CI: if the draft ever diverges from the genesis the
 chain is actually running — a changed `alloc`, a moved fork block, an unexpected
 config key — the build fails.
 
-The placeholders are the string `"TBD"` rather than `null` on purpose. It keeps
-the file valid JSON, and geth hard-fails parsing a string into `*big.Int` /
-`*uint64` instead of quietly reading `null` as "terminal total difficulty zero",
-which would mean *merge immediately*.
+`depositContractAddress` is now real. The other four are still the string
+`"TBD"` — deliberately, rather than `null`. It keeps the file valid JSON, and
+geth hard-fails parsing a string into `*big.Int` / `*uint64` instead of quietly
+reading `null` as "terminal total difficulty zero", which would mean *merge
+immediately*. So the file still cannot be used by accident.
 
 ## What is still open
 
-Every value marked `TBD` in `config.yaml` is undecided — 15 of them, alongside
-4 forks parked at the max-uint64 stub.
+The deposit contract is **deployed** — `0x2d871682c97d93401F0348835af88A1D98ed6564`,
+block `19262622`. That is the first migration parameter to become real. It
+changes nothing yet: `get_deposit_count()` is `0`, so no validator has
+deposited, and every parameter that depends on the deposits is still open. See
+[`../README.md#deposit-contract`](../README.md#deposit-contract) for how the
+address and block were verified.
 
-The undecided values include everything that defines the chain's identity —
-`TERMINAL_TOTAL_DIFFICULTY`, `MIN_GENESIS_TIME`,
-`MIN_GENESIS_ACTIVE_VALIDATOR_COUNT`, `DEPOSIT_CONTRACT_ADDRESS`, the fork
-epochs — plus the whole set of fork versions. Both other networks encode their
-chain id in the low bytes: mainnet uses `0x0X000051` (`81 = 0x51`) and sandbox1
-uses `0x0X000539` (`1337 = 0x539`). The testnet equivalent would be
-`0x0X002761` (`10081 = 0x2761`), but that has not been decided.
+[`../metadata/config.yaml`](../metadata/config.yaml) no longer carries any
+`TBD`. The fork versions are set — `0x0X002761`, encoding chain id
+`10081 = 0x2761`, distinct from joc mainnet's `0x0X000051` and sandbox1's
+`0x0X000539`, so the three networks cannot collide on a fork digest.
 
-Also still to be produced:
+That is not the same as the chain being ready. What the values actually say:
 
-- `bootstrap_nodes.yaml` — consensus-layer bootnodes (ENRs)
-- `deposit_contract.txt` — deposit contract address (also `DEPOSIT_CONTRACT_ADDRESS` in `config.yaml`)
-- `genesis.ssz` — beacon chain genesis state
-- Genesis details: fork digest, validators root, genesis time
+| | |
+|---|---|
+| `MIN_GENESIS_ACTIVE_VALIDATOR_COUNT` | `2` |
+| Deposits in the contract | **0** — genesis cannot trigger |
+| `MIN_GENESIS_TIME` | `1787905920` — 2026-08-28T08:32:00Z, already elapsed |
+| `TERMINAL_TOTAL_DIFFICULTY` | `2**64-1` — the merge is **not** scheduled |
+| Forks scheduled | Altair epoch 5, Bellatrix epoch 10 |
+| Forks disabled | Capella and everything after, at `2**64-1` |
+
+Because `MIN_GENESIS_TIME` has already passed with no deposits recorded, beacon
+genesis is now gated entirely on the second deposit: it will be that eth1
+block's timestamp plus `GENESIS_DELAY`, not `MIN_GENESIS_TIME`.
+
+Bellatrix activating at epoch 10 does not merge the chain. The merge needs
+`TERMINAL_TOTAL_DIFFICULTY`, and at Clique's 1 difficulty per 5-second block
+the max-uint64 stub is roughly 2.9 trillion years away — unreachable by design.
+The execution layer stays PoA until a real value is chosen.
+
+Two consensus-layer bootnodes are published and proven alive — see
+[`../metadata/bootstrap_nodes.yaml`](../metadata/bootstrap_nodes.yaml). They
+run discovery for a beacon chain that does not exist yet, which is the normal
+order: the bootnodes come up first.
+
+Still to produce:
+
+| File | State |
+|---|---|
+| `../metadata/genesis.ssz` | absent — see below |
+
+Also still to be produced: the beacon genesis details — fork digest, validators
+root, genesis time. None of them exist until genesis triggers.
+
+Two execution-layer bootnodes were added on 2026-08-28 for the same bring-up
+and replaced the two JOCT published previously — see
+[`../metadata/enodes.yaml`](../metadata/enodes.yaml). Both accept TCP on 30303.
+
+### The two layers do not yet agree on the merge
+
+`config.yaml` says `TERMINAL_TOTAL_DIFFICULTY: 18446744073709551615`.
+[`genesis.json`](genesis.json) in this directory still says
+`"terminalTotalDifficulty": "TBD"`, and its `shanghaiTime`, `cancunTime` and
+`pragueTime` are `"TBD"` too, matching Capella/Deneb/Electra being disabled on
+the consensus side.
+
+Both mean "no merge scheduled", so nothing is broken — but they say it
+differently, and that is worth resolving before either file is used in anger.
+Setting the execution side to the same max-uint64 stub would make the two
+literally agree; it is left as `TBD` for now because the three timestamp forks
+genuinely are undecided, and a half-filled file invites being trusted.
 
 ### Why there is no `genesis.ssz`
 
 `genesis.ssz` is the beacon chain genesis state, derived from the deposit
-contract's contents at a chosen block. None of its inputs exist yet:
-`MIN_GENESIS_TIME`, `MIN_GENESIS_ACTIVE_VALIDATOR_COUNT`, `GENESIS_FORK_VERSION`
-and `DEPOSIT_CONTRACT_ADDRESS` are all `TBD`, and no validator has deposited.
+contract's contents at a chosen block. The contract now exists, but it is
+empty — `get_deposit_count()` is `0`, so there is nothing to derive a state
+from — and its remaining inputs are still unset: `MIN_GENESIS_TIME`,
+`MIN_GENESIS_ACTIVE_VALIDATOR_COUNT` and `GENESIS_FORK_VERSION` are all `TBD`.
 
-A generated stand-in would carry a `genesis_validators_root` that is pure
-fiction — and that value is what every signature on the network is
-domain-separated by. Shipping one publicly is worse than shipping nothing:
-clients would compute fork digests that match no peer, and anything signed
-against it would be signed under the wrong domain. It gets committed when the
-migration parameters are real, not before.
+It is the one missing file that gets no `TBD` placeholder, because there is no
+such thing as a placeholder for it. A generated stand-in would carry a
+`genesis_validators_root` that is pure fiction — and that value is what every
+signature on the network is domain-separated by. Shipping one publicly is worse
+than shipping nothing: clients would compute fork digests that match no peer,
+and anything signed against it would be signed under the wrong domain. It gets
+committed when the migration parameters are real, not before.
 
 ## Do not use
 
-These files cannot be verified — there is no beacon chain to check them
-against, which is why they sit outside the CI-verified `metadata/` directory.
-Do not point a production beacon node at them.
+None of this can be verified — there is no beacon chain to check it against.
+Do not point a production beacon node at
+[`../metadata/config.yaml`](../metadata/config.yaml), and do not `geth init` a
+production node with the `genesis.json` in this directory.

@@ -2,7 +2,7 @@
   "name": "Japan Open Chain Testnet",
   "chain": "JOCT",
   "chainId": 10081,
-  "networkId": 10081,
+  "networkId": 361257328,
   "shortName": "joct",
   "slip44": 1,
   "nativeCurrency": {
