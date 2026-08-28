@@ -39,6 +39,17 @@ forks:
   london: 1330295
   # Shanghai and later activate at the PoA -> PoS migration. See ../../pos-migration/.
 
+# Deposit contract — deployed, but no deposits yet
+# ---------------------------------------------------------------
+# The contract is live and genuine: get_deposit_root() returns the canonical
+# empty-tree root, and get_deposit_count() is 0. The chain is still PoA; see
+# ./config.yaml and ../pos-migration/.
+deposit_contract_address: 0x2d871682c97d93401F0348835af88A1D98ed6564
+deposit_contract_block: 19262622        # 2026-08-28T07:09:25Z, tx 0x25887f79…32e7;
+                                        # internal CREATE from factory
+                                        # 0x4c8cbfac…b61d at nonce 3. See ../README.md.
+deposit_contract_block_hash: 0xb948dc02090568aef6337f5761eefb043cf9888d23a70ff845bcffa560a2b980
+
 # Genesis allocation
 alloc_summary:
   precompile_placeholders: 256          # 0x00..0x00 through 0x00..0xff, 1 wei each

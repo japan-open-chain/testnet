@@ -35,32 +35,37 @@ enforces that invariant in CI: if the draft ever diverges from the genesis the
 chain is actually running — a changed `alloc`, a moved fork block, an unexpected
 config key — the build fails.
 
-The placeholders are the string `"TBD"` rather than `null` on purpose. It keeps
-the file valid JSON, and geth hard-fails parsing a string into `*big.Int` /
-`*uint64` instead of quietly reading `null` as "terminal total difficulty zero",
-which would mean *merge immediately*.
+`depositContractAddress` is now real. The other four are still the string
+`"TBD"` — deliberately, rather than `null`. It keeps the file valid JSON, and
+geth hard-fails parsing a string into `*big.Int` / `*uint64` instead of quietly
+reading `null` as "terminal total difficulty zero", which would mean *merge
+immediately*. So the file still cannot be used by accident.
 
 ## What is still open
 
+The deposit contract is **deployed** — `0x2d871682c97d93401F0348835af88A1D98ed6564`,
+block `19262622`. That is the first migration parameter to become real. It
+changes nothing yet: `get_deposit_count()` is `0`, so no validator has
+deposited, and every parameter that depends on the deposits is still open. See
+[`../README.md#deposit-contract`](../README.md#deposit-contract) for how the
+address and block were verified.
+
 Every value marked `TBD` in [`../metadata/config.yaml`](../metadata/config.yaml)
-is undecided — 15 of them, alongside 4 forks parked at the max-uint64 stub.
+is undecided — 14 of them, alongside 4 forks parked at the max-uint64 stub.
 
 The undecided values include everything that defines the chain's identity —
 `TERMINAL_TOTAL_DIFFICULTY`, `MIN_GENESIS_TIME`,
-`MIN_GENESIS_ACTIVE_VALIDATOR_COUNT`, `DEPOSIT_CONTRACT_ADDRESS`, the fork
-epochs — plus the whole set of fork versions. Both other networks encode their
-chain id in the low bytes: mainnet uses `0x0X000051` (`81 = 0x51`) and sandbox1
-uses `0x0X000539` (`1337 = 0x539`). The testnet equivalent would be
-`0x0X002761` (`10081 = 0x2761`), but that has not been decided.
+`MIN_GENESIS_ACTIVE_VALIDATOR_COUNT`, the fork epochs — plus the whole set of
+fork versions. Both other networks encode their chain id in the low bytes:
+mainnet uses `0x0X000051` (`81 = 0x51`) and sandbox1 uses `0x0X000539`
+(`1337 = 0x539`). The testnet equivalent would be `0x0X002761`
+(`10081 = 0x2761`), but that has not been decided.
 
 Alongside those, in `../metadata/`:
 
 | File | State |
 |---|---|
 | [`../metadata/bootstrap_nodes.yaml`](../metadata/bootstrap_nodes.yaml) | empty list — no consensus-layer bootnodes exist yet |
-| [`../metadata/deposit_contract.txt`](../metadata/deposit_contract.txt) | `TBD` — contract not deployed |
-| [`../metadata/deposit_contract_block.txt`](../metadata/deposit_contract_block.txt) | `TBD` |
-| [`../metadata/deposit_contract_block_hash.txt`](../metadata/deposit_contract_block_hash.txt) | `TBD` |
 | `../metadata/genesis.ssz` | absent — see below |
 
 Also still to be produced: the beacon genesis details — fork digest, validators
@@ -69,9 +74,10 @@ root, genesis time.
 ### Why there is no `genesis.ssz`
 
 `genesis.ssz` is the beacon chain genesis state, derived from the deposit
-contract's contents at a chosen block. None of its inputs exist yet:
-`MIN_GENESIS_TIME`, `MIN_GENESIS_ACTIVE_VALIDATOR_COUNT`, `GENESIS_FORK_VERSION`
-and `DEPOSIT_CONTRACT_ADDRESS` are all `TBD`, and no validator has deposited.
+contract's contents at a chosen block. The contract now exists, but it is
+empty — `get_deposit_count()` is `0`, so there is nothing to derive a state
+from — and its remaining inputs are still unset: `MIN_GENESIS_TIME`,
+`MIN_GENESIS_ACTIVE_VALIDATOR_COUNT` and `GENESIS_FORK_VERSION` are all `TBD`.
 
 It is the one missing file that gets no `TBD` placeholder, because there is no
 such thing as a placeholder for it. A generated stand-in would carry a

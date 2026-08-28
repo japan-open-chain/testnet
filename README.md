@@ -69,6 +69,71 @@ single funded account:
 0xe546882a744f43d20b84e8a0e5a6ac9f83f9d6e0   1,000,000,000 JOCT
 ```
 
+## Deposit contract
+
+Deployed, but **no validator has deposited yet**. JOCT still runs Clique PoA.
+
+```yaml
+address:    0x2d871682c97d93401F0348835af88A1D98ed6564
+block:      19262622          # 2026-08-28T07:09:25Z
+block_hash: 0xb948dc02090568aef6337f5761eefb043cf9888d23a70ff845bcffa560a2b980
+```
+
+That it is a genuine deposit contract is checked, not assumed. It answers
+`get_deposit_root()` with
+`0xd70a2347…7e5e` — the canonical **empty-tree** root, which is reproducible
+offline from the contract's own zero-hash ladder and matches nothing else:
+
+```bash
+python3 -c "
+import hashlib; sha=lambda b: hashlib.sha256(b).digest()
+z=[b'\x00'*32]
+for i in range(32): z.append(sha(z[i]+z[i]))
+n=b'\x00'*32
+for h in range(32): n=sha(n+z[h])
+print('0x'+sha(n+(0).to_bytes(8,'little')+b'\x00'*24).hex())"
+# 0xd70a234731285c6804c2a4f56711ddb8c82c99740f207854891028af34e27e5e
+```
+
+`get_deposit_count()` returns `0`, which is the same statement from the other
+side: the contract is live and empty.
+
+### Finding the deployment block took some care
+
+The obvious route does not work. This node prunes state — `eth_getCode` at the
+deployment block fails with `missing trie node`, so a binary search over
+history is out (it succeeds only at genesis and within roughly the last 128
+blocks).
+
+The explorer names creation transaction `0x25887f79…32e7`, and the node's own
+receipt confirms that transaction and its block. But that receipt's
+`contractAddress` is `0x4c8cbfac…b61d`, a **factory**, not the deposit
+contract, and the deposit contract is not among the addresses that emitted logs
+in the transaction. It was created by an internal `CREATE`, which no public RPC
+on this node will show.
+
+So it was confirmed arithmetically instead. A `CREATE` address is
+`keccak256(rlp([creator, nonce]))[12:]`, and from that factory:
+
+```
+nonce 1 -> 0xb2bedb50…8aa9   [emitted a log in the tx]
+nonce 2 -> 0x09297165…da16   [emitted a log in the tx]
+nonce 3 -> 0x2d871682…6564   <- the deposit contract
+nonce 4 -> 0xb85a6df7…8b1e   [emitted a log in the tx]
+```
+
+Nonces 1, 2 and 4 are three of the addresses that emitted logs in that
+transaction, per the node's own receipt. Nonces are sequential, so the nonce-3
+creation cannot have happened later than the nonce-4 one — the deposit contract
+was created in that transaction, in block `19262622`. Only the list of internal
+creations came from the explorer; everything load-bearing came from the node.
+
+Reproduce the derivation with:
+
+```bash
+cast compute-address --nonce 3 0x4c8cbfaca8675deb6457a022cc7b3f4f2b41b61d
+```
+
 ## Files
 
 The layout follows [eth-clients](https://github.com/eth-clients/mainnet), the
@@ -82,18 +147,18 @@ Everything the live PoA chain runs on is filled in and checked by CI:
 | [`metadata/genesis_details.yaml`](metadata/genesis_details.yaml) | Genesis hash, state root, clique params, fork blocks, allocation summary |
 | [`metadata/enodes.yaml`](metadata/enodes.yaml) | Execution-layer bootnode enode URLs |
 | [`metadata/chain.json`](metadata/chain.json) | EIP-155 chain metadata — id, RPC endpoints, native currency, explorer |
+| [`metadata/deposit_contract.txt`](metadata/deposit_contract.txt) | Deposit contract address |
+| [`metadata/deposit_contract_block.txt`](metadata/deposit_contract_block.txt) | Eth1 block it was deployed in |
+| [`metadata/deposit_contract_block_hash.txt`](metadata/deposit_contract_block_hash.txt) | Hash of that block |
 
-The consensus-layer files exist so the layout is complete, but JOCT has no
-beacon chain yet, so their contents are placeholders. **Nothing below is
-usable** — see [`pos-migration/`](pos-migration/) for what is still open:
+The remaining consensus-layer files exist so the layout is complete, but JOCT
+has no beacon chain yet. **Nothing below is usable** — see
+[`pos-migration/`](pos-migration/) for what is still open:
 
 | File | State |
 |---|---|
-| [`metadata/config.yaml`](metadata/config.yaml) | Beacon chain config. Carries a `DRAFT — NOT ACTIVE` banner; 15 values are `TBD`. |
+| [`metadata/config.yaml`](metadata/config.yaml) | Beacon chain config. Carries a `DRAFT — NOT ACTIVE` banner; 14 values are `TBD`. |
 | [`metadata/bootstrap_nodes.yaml`](metadata/bootstrap_nodes.yaml) | Consensus-layer bootnode ENRs — empty, none published |
-| [`metadata/deposit_contract.txt`](metadata/deposit_contract.txt) | Deposit contract address — `TBD`, not deployed |
-| [`metadata/deposit_contract_block.txt`](metadata/deposit_contract_block.txt) | Eth1 block it was deployed in — `TBD` |
-| [`metadata/deposit_contract_block_hash.txt`](metadata/deposit_contract_block_hash.txt) | Hash of that block — `TBD` |
 | `metadata/genesis.ssz` | Beacon genesis state — **absent**, and deliberately not stubbed |
 
 `genesis.ssz` is the one gap with no placeholder: its `genesis_validators_root`

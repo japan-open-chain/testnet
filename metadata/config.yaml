@@ -162,7 +162,11 @@ REORG_MAX_EPOCHS_SINCE_FINALIZATION: 2
 # 361257328 and not the chain id. sandbox1 sets it the same way.
 DEPOSIT_CHAIN_ID: 10081
 DEPOSIT_NETWORK_ID: 361257328
-DEPOSIT_CONTRACT_ADDRESS: TBD  # see ./deposit_contract.txt
+# Deployed 2026-08-28 in block 19262622, and verified against the node: it
+# answers get_deposit_root() with the canonical empty-tree root. No validator
+# has deposited yet — get_deposit_count() is 0 — so the genesis parameters
+# below still cannot be fixed. See ./deposit_contract.txt and ../README.md.
+DEPOSIT_CONTRACT_ADDRESS: 0x2d871682c97d93401F0348835af88A1D98ed6564
 
 # Networking
 # ---------------------------------------------------------------
