@@ -89,9 +89,9 @@ Still to produce:
 Also still to be produced: the beacon genesis details — fork digest, validators
 root, genesis time. None of them exist until genesis triggers.
 
-Two further execution-layer bootnodes were added on 2026-08-28 for the same
-bring-up — see [`../metadata/enodes.yaml`](../metadata/enodes.yaml), which now
-lists four. All four accept TCP on 30303.
+Two execution-layer bootnodes were added on 2026-08-28 for the same bring-up
+and replaced the two JOCT published previously — see
+[`../metadata/enodes.yaml`](../metadata/enodes.yaml). Both accept TCP on 30303.
 
 ### The two layers do not yet agree on the merge
 
