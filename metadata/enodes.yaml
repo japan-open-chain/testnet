@@ -12,19 +12,8 @@
 - enode://c68340e7daac1eecc3cdfbfc7c68a80ebf91dbc7f63413dae39b75b2738e63965033cefe452f0b50d8f1d2c5df74eba9905e85c223dda9bc0040fb1c06f35dc5@13.158.174.185:30303  # aws-ap-northeast-1
 - enode://f964f94067a851758a3f308831602ca05a374a8a5dcba8ec5f78cde5d31dc809fc0115a84a785bbd1c8024a46d16eee732f4b681cc36cf323e8fab933f92849a@54.248.244.225:30303  # aws-ap-northeast-1
 
-# ---------------------------------------------------------------------------
-# HELD BACK — supplied by the operators on 2026-08-28, not reachable yet.
-#
-# Neither host answers on ANY port from the public internet: 30303, 8545, 443
-# and 22 all time out (packets dropped, not refused — the signature of a
-# security group that has not been opened). The two bootnodes above and both
-# consensus bootnodes in ./bootstrap_nodes.yaml were reachable from the same
-# machine at the same moment, so this is not a local egress problem.
-#
-# They are parked here rather than published because a listed bootnode that
-# drops traffic costs every client a dial timeout, and ../scripts/check_bootnodes.sh
-# would fail CI on them. Uncomment once the hosts accept inbound TCP — that is
-# the only change needed.
-#
-# - enode://c0752c60b9302ab61c758f3047d62a0d48a9cf36e4f28449c666b173a5294b42a004c99f0d980420f2491402044e6ecb4ea837f2b009db42f5b5348ff3757b8a@54.168.37.19:30303  # aws-ap-northeast-1
-# - enode://3cba25758ee4563f2d1ac9471a277ebe1998140a246097c475394be367146972fd836cb15b252967d61bfd6005fc89a1bc73ddc11425423205159ae36ba5e6df@54.199.149.105:30303  # aws-ap-northeast-1
+# Added 2026-08-28 for the PoS bring-up, alongside the consensus bootnodes in
+# ./bootstrap_nodes.yaml. Their hosts refused all traffic until the security
+# group was opened; both accept TCP on 30303 now.
+- enode://c0752c60b9302ab61c758f3047d62a0d48a9cf36e4f28449c666b173a5294b42a004c99f0d980420f2491402044e6ecb4ea837f2b009db42f5b5348ff3757b8a@54.168.37.19:30303  # aws-ap-northeast-1
+- enode://3cba25758ee4563f2d1ac9471a277ebe1998140a246097c475394be367146972fd836cb15b252967d61bfd6005fc89a1bc73ddc11425423205159ae36ba5e6df@54.199.149.105:30303  # aws-ap-northeast-1

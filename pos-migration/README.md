@@ -89,10 +89,9 @@ Still to produce:
 Also still to be produced: the beacon genesis details — fork digest, validators
 root, genesis time. None of them exist until genesis triggers.
 
-Two further execution-layer bootnodes were supplied on 2026-08-28 but are
-**held back** at the bottom of [`../metadata/enodes.yaml`](../metadata/enodes.yaml):
-neither host accepts inbound connections from the public internet yet. They are
-one uncomment away once that changes.
+Two further execution-layer bootnodes were added on 2026-08-28 for the same
+bring-up — see [`../metadata/enodes.yaml`](../metadata/enodes.yaml), which now
+lists four. All four accept TCP on 30303.
 
 ### The two layers do not yet agree on the merge
 
