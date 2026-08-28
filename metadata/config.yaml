@@ -21,7 +21,7 @@
 #     to derive a genesis state from.
 #
 # So: do NOT point a production beacon node at this file expecting it to
-# join anything. See ../pos-migration/ for what the migration still needs.
+# join anything. See ../README.md#beacon-chain-status for what is still missing.
 #
 # The execution-layer counterpart lives in ./genesis.json.
 # =====================================================================

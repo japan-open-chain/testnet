@@ -156,9 +156,7 @@ Everything the live PoA chain runs on is filled in and checked by CI:
 | [`scripts/discv5_probe.py`](scripts/discv5_probe.py) | Proves a discv5 node is alive by making it answer `WHOAREYOU` |
 
 The remaining consensus-layer files describe a beacon chain that **has not
-started**. The parameters are decided and the bootnodes are up, but no
-validator has deposited, no beacon node answers, and the merge is not
-scheduled — see [`pos-migration/`](pos-migration/):
+started**:
 
 | File | State |
 |---|---|
@@ -190,14 +188,59 @@ port that accepts TCP — enough to catch rot, not enough to prove identity.
 `scripts/check_bootnodes.sh` runs both, and CI runs it weekly, so a bootnode
 going away surfaces on its own.
 
-`genesis.ssz` is the one gap with no placeholder: its `genesis_validators_root`
-domain-separates every signature on the network, so a fabricated one would make
-clients compute fork digests that match no peer. See
-[`pos-migration/README.md`](pos-migration/README.md#why-there-is-no-genesisssz).
+## Beacon chain status
 
-The execution-side draft of the merge — `genesis.json` with the fork-activation
-fields added — stays in [`pos-migration/`](pos-migration/), where
-`scripts/check_pos_migration.sh` holds it to the live genesis.
+The parameters are decided and the bootnodes are up, but nothing has launched.
+As of 2026-08-28:
+
+| | |
+|---|---|
+| Deposits in the contract | **0** — beacon genesis cannot trigger |
+| `MIN_GENESIS_ACTIVE_VALIDATOR_COUNT` | `2` |
+| `MIN_GENESIS_TIME` | `1787905920` — 2026-08-28T08:32:00Z, already elapsed |
+| `TERMINAL_TOTAL_DIFFICULTY` | `2**64-1` — the merge is **not** scheduled |
+| Forks scheduled | Altair epoch 5, Bellatrix epoch 10 |
+| Forks disabled | Capella and everything after, at `2**64-1` |
+| Beacon API | nothing answers |
+
+Because `MIN_GENESIS_TIME` has already passed with no deposits recorded, beacon
+genesis is now gated entirely on the second deposit: it will be that eth1
+block's timestamp plus `GENESIS_DELAY`, not `MIN_GENESIS_TIME`.
+
+Bellatrix activating at epoch 10 does not merge the chain. The merge needs
+`TERMINAL_TOTAL_DIFFICULTY`, and at Clique's 1 difficulty per 5-second block the
+max-uint64 stub is roughly 2.9 trillion years away — unreachable by design. The
+execution layer stays PoA until a real value is chosen.
+
+### Why `PRESET_BASE` is `gnosis`
+
+Lighthouse — and most consensus clients — do not allow overriding preset values
+from a config file; the preset is compiled in. JOC produces a block every 5
+seconds on the execution layer, matching Gnosis Chain rather than Ethereum
+mainnet's 12s, so the Gnosis preset is the right base. It sets `SLOTS_PER_EPOCH`
+to 16, which makes an epoch `16 * 5 = 80` seconds, not the 384s of the mainnet
+preset — worth remembering when reading the fork epochs above.
+
+- https://github.com/gnosischain/specs/tree/master/consensus/preset/gnosis
+- https://github.com/sigp/lighthouse/tree/stable/consensus/types/presets/gnosis
+
+### Why there is no `genesis.ssz`
+
+`genesis.ssz` is the beacon chain genesis state, derived from the deposit
+contract's contents at a chosen block. The contract exists but is empty, so
+there is nothing to derive a state from.
+
+It is the one missing piece that gets no placeholder, because there is no such
+thing as a placeholder for it. A generated stand-in would carry a
+`genesis_validators_root` that is pure fiction — and that value is what every
+signature on the network is domain-separated by. Shipping one publicly is worse
+than shipping nothing: clients would compute fork digests that match no peer,
+and anything signed against it would be signed under the wrong domain. It gets
+committed when the beacon chain is real, not before.
+
+Take it from the beacon node's own `/eth/v2/debug/beacon/states/genesis` when
+there is one, rather than rebuilding it from the eth1 deposits — that is the
+kind of reconstruction the `berlinBlock` lesson on sandbox1 warns against.
 
 ## Endpoints
 

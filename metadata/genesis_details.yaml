@@ -37,13 +37,14 @@ forks:
   muir_glacier: 0
   berlin: 1330295
   london: 1330295
-  # Shanghai and later activate at the PoA -> PoS migration. See ../../pos-migration/.
+  # Shanghai and later activate at the PoA -> PoS migration, which is not
+  # scheduled. See ./config.yaml and ../README.md#beacon-chain-status.
 
 # Deposit contract — deployed, but no deposits yet
 # ---------------------------------------------------------------
 # The contract is live and genuine: get_deposit_root() returns the canonical
 # empty-tree root, and get_deposit_count() is 0. The chain is still PoA; see
-# ./config.yaml and ../pos-migration/.
+# ./config.yaml and ../README.md#beacon-chain-status.
 deposit_contract_address: 0x2d871682c97d93401F0348835af88A1D98ed6564
 deposit_contract_block: 19262622        # 2026-08-28T07:09:25Z, tx 0x25887f79…32e7;
                                         # internal CREATE from factory
