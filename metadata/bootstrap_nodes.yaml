@@ -1,14 +1,11 @@
-# Consensus-layer bootstrap nodes (ENRs) for JOC testnet (JOCT). Supplied by
-# the operators on 2026-08-28. Both are dedicated discv5 bootnodes: udp 9000
-# only, no tcp, and no eth2 entry.
+# Consensus-layer bootstrap nodes (ENRs) for JOC testnet (JOCT). Dedicated
+# discv5 bootnodes: udp 9000 only, no tcp, no eth2 entry.
 #
 # Liveness is proven, not dialled: ../scripts/discv5_probe.py makes each node
 # answer WHOAREYOU, which only a node whose id is keccak256 of the key in its
-# own record can do. Both answered, and the id matched, when they were added.
+# own record can do.
 #
 # Execution-layer counterpart: ./enodes.yaml
-#
-# Note that the beacon chain these point at has not started — see ./config.yaml.
 #
 # Pass to a consensus client with:
 #   lighthouse beacon_node --testnet-dir metadata \

@@ -8,10 +8,7 @@
 # Pass to geth with:
 #   geth --bootnodes "$(yq -r '.[] | split(" ")[0]' enodes.yaml | paste -sd, -)"
 
-# Added 2026-08-28 for the PoS bring-up, alongside the consensus bootnodes in
-# ./bootstrap_nodes.yaml. These replace the two bootnodes JOCT published
-# previously (13.158.174.185 and 54.248.244.225), which were retired from this
-# list on the same day — both were still answering at the time, so anything
-# pinned to them keeps working until the operators take them down.
+# Added 2026-08-28, replacing the two published previously (13.158.174.185 and
+# 54.248.244.225). Consensus-layer counterpart: ./bootstrap_nodes.yaml
 - enode://c0752c60b9302ab61c758f3047d62a0d48a9cf36e4f28449c666b173a5294b42a004c99f0d980420f2491402044e6ecb4ea837f2b009db42f5b5348ff3757b8a@54.168.37.19:30303  # aws-ap-northeast-1
 - enode://3cba25758ee4563f2d1ac9471a277ebe1998140a246097c475394be367146972fd836cb15b252967d61bfd6005fc89a1bc73ddc11425423205159ae36ba5e6df@54.199.149.105:30303  # aws-ap-northeast-1
