@@ -4,9 +4,8 @@ Japan Open Chain testnet — chain ID `10081`, Clique proof-of-authority,
 5-second blocks.
 
 This directory contains the chain metadata, configuration parameters and
-genesis information for JOCT, execution and consensus layer both. The
-execution-layer files are verified against the live network by CI; the
-consensus-layer files are the real JOCT beacon config, awaiting genesis.
+genesis information for JOCT, execution and consensus layer both. The beacon
+chain is live — genesis fired 2026-08-28T15:16:25Z.
 
 > **The p2p network id is `361257328`, not the chain id `10081`.** Geth
 > defaults `--networkid` to the genesis `chainId`, so it must be passed
@@ -72,18 +71,19 @@ single funded account:
 
 ## Deposit contract
 
-Deployed, but **no validator has deposited yet**. JOCT still runs Clique PoA.
-
 ```yaml
 address:    0x2d871682c97d93401F0348835af88A1D98ed6564
 block:      19262622          # 2026-08-28T07:09:25Z
 block_hash: 0xb948dc02090568aef6337f5761eefb043cf9888d23a70ff845bcffa560a2b980
 ```
 
-That it is a genuine deposit contract is checked, not assumed. It answers
-`get_deposit_root()` with
-`0xd70a2347…7e5e` — the canonical **empty-tree** root, which is reproducible
-offline from the contract's own zero-hash ladder and matches nothing else:
+It holds the 2 deposits that seeded the beacon chain (`get_deposit_count()`,
+blocks `19267254` and `19267265`).
+
+That it is a genuine deposit contract was checked at deployment, not assumed:
+while still empty it answered `get_deposit_root()` with `0xd70a2347…7e5e`, the
+canonical empty-tree root, reproducible offline from the contract's own
+zero-hash ladder and matching nothing else:
 
 ```bash
 python3 -c "
@@ -95,9 +95,6 @@ for h in range(32): n=sha(n+z[h])
 print('0x'+sha(n+(0).to_bytes(8,'little')+b'\x00'*24).hex())"
 # 0xd70a234731285c6804c2a4f56711ddb8c82c99740f207854891028af34e27e5e
 ```
-
-`get_deposit_count()` returns `0`, which is the same statement from the other
-side: the contract is live and empty.
 
 ### Finding the deployment block took some care
 
@@ -145,6 +142,7 @@ same one [`gu-corp/sandbox1`](https://github.com/gu-corp/sandbox1) uses.
 | [`metadata/genesis.json`](metadata/genesis.json) | Execution-layer genesis. Feed to `geth init`. |
 | [`metadata/genesis_details.yaml`](metadata/genesis_details.yaml) | Genesis hash, state root, clique params, fork blocks, allocation summary |
 | [`metadata/config.yaml`](metadata/config.yaml) | Beacon chain config. Feed to a consensus client. |
+| [`metadata/genesis.ssz`](metadata/genesis.ssz) | Beacon genesis state. Feed to a consensus client. |
 | [`metadata/chain.json`](metadata/chain.json) | EIP-155 chain metadata — id, RPC endpoints, native currency, explorer |
 | [`metadata/enodes.yaml`](metadata/enodes.yaml) | Execution-layer bootnode enode URLs |
 | [`metadata/bootstrap_nodes.yaml`](metadata/bootstrap_nodes.yaml) | Consensus-layer bootnode ENRs |
@@ -152,9 +150,6 @@ same one [`gu-corp/sandbox1`](https://github.com/gu-corp/sandbox1) uses.
 | [`metadata/deposit_contract_block.txt`](metadata/deposit_contract_block.txt) | Eth1 block it was deployed in |
 | [`metadata/deposit_contract_block_hash.txt`](metadata/deposit_contract_block_hash.txt) | Hash of that block |
 | [`scripts/discv5_probe.py`](scripts/discv5_probe.py) | Proves a discv5 node is alive by making it answer `WHOAREYOU` |
-
-`metadata/genesis.ssz` — the beacon genesis state — is the one file not here
-yet. It cannot exist until there are deposits to derive it from.
 
 ### How the bootnodes are checked
 
@@ -183,24 +178,25 @@ going away surfaces on its own.
 
 ## Beacon chain
 
-The config is final and the bootnodes are up. Genesis has not fired yet.
+**Live.** `MIN_GENESIS_TIME` elapsed before any deposit, so genesis fired at
+the eth1 block carrying the 2nd deposit (block `19267265`) plus
+`GENESIS_DELAY` — confirmed both by computing that sum and by the node.
 
 | | |
 |---|---|
-| Deposits in the contract | `0` — genesis triggers on the 2nd |
-| `MIN_GENESIS_ACTIVE_VALIDATOR_COUNT` | `2` |
-| `MIN_GENESIS_TIME` | `1787905920` — 2026-08-28T08:32:00Z, already elapsed |
+| `genesis_time` | `1787930185` — 2026-08-28T15:16:25Z |
+| `genesis_validators_root` | `0x93531a50099acd3f91c38790b944b5e034f0f35c48ce3e06d6dacc782c78b19d` |
+| Validators at genesis | `2` (= `MIN_GENESIS_ACTIVE_VALIDATOR_COUNT`) |
 | `GENESIS_FORK_VERSION` | `0x00002761` — low bytes are chain id `10081` |
 | Forks scheduled | Altair epoch 5, Bellatrix epoch 10 |
 | Forks disabled | Capella onwards, at `2**64-1` |
 | `TERMINAL_TOTAL_DIFFICULTY` | `2**64-1` — merge not scheduled |
 
-Since `MIN_GENESIS_TIME` has elapsed, genesis time will be the timestamp of the
-eth1 block carrying the second deposit, plus `GENESIS_DELAY`.
-
-Bellatrix at epoch 10 does not merge the chain — that needs
-`TERMINAL_TOTAL_DIFFICULTY`, which is parked at the max-uint64 stub. The
-execution layer stays Clique PoA until a real value is set.
+With 2 validators the chain finalizes, but finality stops if either drops —
+blocks would still be proposed, and never finalized. Bellatrix at
+epoch 10 does not merge the chain — that needs `TERMINAL_TOTAL_DIFFICULTY`,
+which is parked at the max-uint64 stub. The execution layer stays Clique PoA
+until a real value is set.
 
 ### `PRESET_BASE` is `gnosis`
 
@@ -214,15 +210,17 @@ seconds, not 384 — worth remembering when reading the fork epochs above.
 
 ### `genesis.ssz` comes from the node, not from a script
 
-It is the beacon genesis state, derived from the deposit contract's contents.
-No deposits, no state — so the file is absent rather than stubbed. A generated
-stand-in would carry a fictional `genesis_validators_root`, and that value
-domain-separates every signature on the network: clients would compute fork
-digests matching no peer.
+[`metadata/genesis.ssz`](metadata/genesis.ssz) is the beacon node's own genesis
+state, taken from `/eth/v2/debug/beacon/states/genesis` (Lighthouse v7.0.1) —
+not rebuilt from the eth1 deposits, which is the kind of reconstruction the
+sandbox1 `berlinBlock` lesson warns against. Its decoded header (`genesis_time`,
+`genesis_validators_root`, fork version `0x00002761`, slot 0) matches the
+node's `/eth/v1/beacon/genesis`, and every key
+[`config.yaml`](metadata/config.yaml) sets that the node reports in
+`/eth/v1/config/spec` comes back with the same value.
 
-Once a beacon node is running, take it from
-`/eth/v2/debug/beacon/states/genesis` rather than rebuilding it from the eth1
-deposits.
+`genesis_validators_root` domain-separates every signature on the network, so a
+wrong file here would make clients compute fork digests matching no peer.
 
 ## Endpoints
 
@@ -233,8 +231,8 @@ deposits.
 
 ## Run a node
 
-The chain is Clique PoA, so an execution client on its own follows the head
-today. A consensus client is only needed once the beacon chain has genesis.
+The execution layer is Clique PoA and follows the head on its own; the beacon
+chain runs alongside it until the merge is scheduled.
 
 ### Execution layer
 
@@ -249,9 +247,6 @@ geth --datadir ~/.joct --networkid 361257328 --syncmode full \
 genesis `chainId`, `10081`, not the `361257328` this network uses.
 
 ### Consensus layer
-
-Waits on `metadata/genesis.ssz`, which is not published yet — a client cannot
-join without it, since `genesis_validators_root` names every gossip topic.
 
 ```bash
 lighthouse beacon_node \

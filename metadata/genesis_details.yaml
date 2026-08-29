@@ -42,7 +42,7 @@ forks:
 
 # Deposit contract
 # ---------------------------------------------------------------
-# Deployed and awaiting deposits. See ./config.yaml.
+# See ./config.yaml. The beacon chain seeded from it is live; genesis state in ./genesis.ssz.
 deposit_contract_address: 0x2d871682c97d93401F0348835af88A1D98ed6564
 deposit_contract_block: 19262622        # 2026-08-28T07:09:25Z, tx 0x25887f79…32e7;
                                         # internal CREATE from factory

@@ -1,8 +1,9 @@
 # =====================================================================
 # JOC testnet (JOCT) consensus-layer (beacon chain) configuration.
 #
-# This is the authoritative config for the JOCT beacon chain. Genesis has not
-# fired yet — it triggers on the 2nd deposit; see ../README.md.
+# This is the authoritative config for the JOCT beacon chain, live since
+# genesis at 1787930185 (2026-08-28T15:16:25Z). Verified against a running
+# node's /eth/v1/config/spec. See ../README.md.
 #
 # Execution-layer counterpart: ./genesis.json
 # =====================================================================
@@ -29,10 +30,10 @@ TERMINAL_BLOCK_HASH_ACTIVATION_EPOCH: 18446744073709551615
 
 # Genesis
 # ---------------------------------------------------------------
-# Smallest set that can finalize; the chain halts if one of the two drops.
+# Smallest set that can finalize; finality stops if one of the two drops.
 MIN_GENESIS_ACTIVE_VALIDATOR_COUNT: 2
-# 2026-08-28T08:32:00Z, already elapsed. Genesis is therefore fixed by the eth1
-# block carrying the 2nd deposit: its timestamp + GENESIS_DELAY.
+# 2026-08-28T08:32:00Z. Elapsed before any deposit, so actual genesis was fixed
+# by the block carrying the 2nd deposit: its timestamp + GENESIS_DELAY = 1787930185.
 MIN_GENESIS_TIME: 1787905920
 # Low bytes encode the JOCT chain id, 10081 = 0x2761 — distinct from joc
 # mainnet (0x51) and sandbox1 (0x539), so fork digests cannot collide.
