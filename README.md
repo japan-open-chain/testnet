@@ -190,13 +190,17 @@ the eth1 block carrying the 2nd deposit (block `19267265`) plus
 | `GENESIS_FORK_VERSION` | `0x00002761` — low bytes are chain id `10081` |
 | Forks scheduled | Altair epoch 5, Bellatrix epoch 10 |
 | Forks disabled | Capella onwards, at `2**64-1` |
-| `TERMINAL_TOTAL_DIFFICULTY` | `2**64-1` — merge not scheduled |
+| `TERMINAL_TOTAL_DIFFICULTY` | `31123684` — set 2026-09-05 |
 
 With 2 validators the chain finalizes, but finality stops if either drops —
-blocks would still be proposed, and never finalized. Bellatrix at
-epoch 10 does not merge the chain — that needs `TERMINAL_TOTAL_DIFFICULTY`,
-which is parked at the max-uint64 stub. The execution layer stays Clique PoA
-until a real value is set.
+blocks would still be proposed, and never finalized.
+
+**The merge is scheduled.** The execution layer accumulates ~1 difficulty per
+5-second block; at that rate it reaches the TTD around **2026-09-07T02:00Z**.
+Both layers carry the value: the beacon node's `/eth/v1/config/spec` reports
+`31123684`, and [`metadata/genesis.json`](metadata/genesis.json) sets
+`terminalTotalDifficulty` to the same number — supplied by the operators, and
+identical to the CI-proven file in every other field.
 
 ### `PRESET_BASE` is `gnosis`
 
@@ -231,8 +235,9 @@ wrong file here would make clients compute fork digests matching no peer.
 
 ## Run a node
 
-The execution layer is Clique PoA and follows the head on its own; the beacon
-chain runs alongside it until the merge is scheduled.
+The execution layer is Clique PoA and follows the head on its own **until the
+merge** (~2026-09-07, see [Beacon chain](#beacon-chain)); after it, both layers
+are required.
 
 ### Execution layer
 

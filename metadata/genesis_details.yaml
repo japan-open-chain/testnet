@@ -37,8 +37,14 @@ forks:
   muir_glacier: 0
   berlin: 1330295
   london: 1330295
-  # Shanghai and later activate at the PoA -> PoS migration, which is not
-  # scheduled. See ./config.yaml and ../README.md#beacon-chain.
+  # The merge is scheduled at TERMINAL_TOTAL_DIFFICULTY 31123684 (~2026-09-07);
+  # Shanghai and later are not. See ./config.yaml and ../README.md#beacon-chain.
+
+# Merge
+merge:
+  terminal_total_difficulty: 31123684  # in ./genesis.json and the beacon spec;
+                                       # terminal PoW block and first PoS block
+                                       # recorded here once reached
 
 # Deposit contract
 # ---------------------------------------------------------------

@@ -20,9 +20,9 @@ CONFIG_NAME: joct
 
 # Transition
 # ---------------------------------------------------------------
-# Max uint64: the merge is not scheduled. Clique adds 1 difficulty per block,
-# so this is unreachable by design, not an estimate.
-TERMINAL_TOTAL_DIFFICULTY: 18446744073709551615
+# Set 2026-09-05; at Clique's ~1 difficulty per 5s block the chain reaches it
+# ~2026-09-07. Matches the running beacon node's /eth/v1/config/spec.
+TERMINAL_TOTAL_DIFFICULTY: 31123684
 # By default, do not use these params
 TERMINAL_BLOCK_HASH: 0x0000000000000000000000000000000000000000000000000000000000000000
 TERMINAL_BLOCK_HASH_ACTIVATION_EPOCH: 18446744073709551615
@@ -45,8 +45,8 @@ GENESIS_DELAY: 6000
 # Forking
 # ---------------------------------------------------------------
 # Capella onwards is disabled at max uint64, and may be re-assigned to another
-# fork version later. Bellatrix activating does not merge the chain — that
-# needs TERMINAL_TOTAL_DIFFICULTY, which is the stub above.
+# fork version later. The merge happens when the execution layer reaches
+# TERMINAL_TOTAL_DIFFICULTY above; Bellatrix (epoch 10) is long active.
 
 # Altair
 ALTAIR_FORK_VERSION: 0x01002761
