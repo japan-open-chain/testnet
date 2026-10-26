@@ -12,5 +12,5 @@
 #     --boot-nodes "$(sed -n 's/^-[[:space:]]*\(enr:[^[:space:]#]*\).*$/\1/p' \
 #                     metadata/bootstrap_nodes.yaml | paste -sd, -)"
 
-- enr:-IS4QG-lVIOC_Yun6wk_54ZOrps5tZmoZMFXLFc7wfB76COpDqfbTaODeXBYdXOpItPZt0W4a6Xo5_ugK9gsBV0FVIUBgmlkgnY0gmlwhBKx9kiJc2VjcDI1NmsxoQM5rT8o1LnjEKbXrhN9rznOJqkv2i0meNKMXDwODAKqtoN1ZHCCIyg  # 18.177.246.72:9000 udp, aws-ap-northeast-1
-- enr:-IS4QHDlPMfsFccuuDJkMSZVbj_QUlcl9bM7KMtEA3RQcNGadtJRfiyQeZERXjmLm17iztATiLd-Vbs8b-4fJHYmJhkBgmlkgnY0gmlwhDRFkJmJc2VjcDI1NmsxoQOxqYMNUWe2dvOG9yIuB0yMZQeRrFXsT_bAKU8OJFREq4N1ZHCCIyg  # 52.69.144.153:9000 udp, aws-ap-northeast-1
+- enr:-IS4QFxI50_TQU3X3oIZ5vMa9G8tp3qPemaPUL0cMqxPm3-BTylgfWrEAwYnGjNHcr63uso_62C9irOHiIQSV7DR9Z8BgmlkgnY0gmlwhA2fzpWJc2VjcDI1NmsxoQJKjjWnapOHhe1_xJSuKJqNbMuOaTsN3qAzRyrej4EJoYN1ZHCCIyg  # 13.159.206.149:9000 udp, aws-ap-northeast-1
+- enr:-IS4QKJrWwET3O77YV7VfmshrQdH0At5aYNNMmciaxYzHoKiOmIFrXitYiTnMIML8cc95g7Ntv0d9k-7zJB6M5MVEXABgmlkgnY0gmlwhA3ACh2Jc2VjcDI1NmsxoQIrX5QEEZzqJqsTx3MQcXwQ3TagR0FYVdXzl5731BcRgIN1ZHCCIyg  # 13.192.10.29:9000 udp, aws-ap-northeast-1
